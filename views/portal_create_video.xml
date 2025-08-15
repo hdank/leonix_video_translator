@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Add a create button to the portal -->
+    <template id="portal_create_video_translation" name="Create Video Translation">
+        <t t-call="portal.portal_layout">
+            <div class="container mt-4">
+                <div class="row">
+                    <div class="col-12">
+                        <h3>Create Video Translation Request</h3>
+                        
+                        <form action="/my/video-translations/create" method="post" class="mt-4">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            
+                            <div class="form-group">
+                                <label for="name">Name</label>
+                                <input type="text" class="form-control" id="name" name="name" required="required" placeholder="Give your translation request a name"/>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="video_url">Video URL (YouTube or TikTok)</label>
+                                <input type="url" class="form-control" id="video_url" name="video_url" required="required" placeholder="https://www.youtube.com/watch?v=..."/>
+                                <small class="text-muted">Please provide a valid YouTube or TikTok video URL</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="description">Description (Optional)</label>
+                                <textarea class="form-control" id="description" name="description" rows="4" placeholder="Any additional information about this translation request"></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-primary">Submit</button>
+                                <a href="/my/video-translations" class="btn btn-secondary">Cancel</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+    
+    <!-- Add a create button to the translation list -->
+    <template id="portal_my_video_translations_add_button" inherit_id="leonix_video_translator.portal_my_video_translations" name="Add Video Translation Button">
+        <xpath expr="//t[@t-call='portal.portal_searchbar']" position="inside">
+            <div class="o_portal_search_panel ml-lg-4">
+                <a href="/my/video-translations/create" class="btn btn-primary">
+                    <i class="fa fa-plus"></i> New Translation
+                </a>
+            </div>
+        </xpath>
+    </template>
+</odoo>

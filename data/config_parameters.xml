@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- System parameters for API configuration -->
+        <record id="leonix_video_translator_openai_api_key" model="ir.config_parameter">
+            <field name="key">leonix_video_translator.openai_api_key</field>
+            <field name="value">your_openai_api_key_here</field>
+        </record>
+        
+        <record id="leonix_video_translator_gcloud_credentials" model="ir.config_parameter">
+            <field name="key">leonix_video_translator.gcloud_credentials_json</field>
+            <field name="value">{
+  "type": "service_account",
+  "project_id": "your_project_id",
+  "private_key_id": "your_private_key_id",
+  "private_key": "your_private_key",
+  "client_email": "your_service_account_email",
+  "client_id": "your_client_id",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "your_cert_url"
+}</field>
+        </record>
+    </data>
+</odoo>

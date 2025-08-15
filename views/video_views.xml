@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tree View -->
+    <record id="view_video_translator_tree" model="ir.ui.view">
+        <field name="name">leonix.video.translator.tree</field>
+        <field name="model">leonix.video.translator</field>
+        <field name="type">list</field>
+        <field name="arch" type="xml">
+            <list string="Video Translations">
+                <field name="name"/>
+                <field name="video_platform"/>
+                <field name="video_url"/>
+                <field name="state"/>
+                <field name="processing_status"/>
+                <field name="processing_mode"/>
+                <field name="translation_language"/>
+                <field name="user_id"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_video_translator_form" model="ir.ui.view">
+        <field name="name">leonix.video.translator.form</field>
+        <field name="model">leonix.video.translator</field>
+        <field name="arch" type="xml">
+            <form string="Video Translation">
+                <header>
+                    <button name="action_download_video" type="object" string="Download Video" 
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_process_video" type="object" string="Process Video (Dub/Subtitle)" 
+                            class="btn-success" invisible="state != 'downloaded'" 
+                            confirm="This will transcribe, translate, and generate the final video. Continue?"/>
+                    <button name="action_delete_video" type="object" string="Delete Video" 
+                            class="btn-warning" invisible="state == 'draft'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <!-- Invisible fields needed for button visibility -->
+                    <field name="video_attachment_id" invisible="1"/>
+                    
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_process_video" type="object" 
+                                class="oe_stat_button" icon="fa-play-circle" 
+                                invisible="state != 'downloaded'">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="processing_status" widget="badge"/>
+                                </span>
+                                <span class="o_stat_text">Processing</span>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="video_url" placeholder="Paste YouTube or TikTok URL here"/>
+                            <field name="video_platform" readonly="1"/>
+                            <field name="video_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="user_id"/>
+                            <field name="translation_language" required="1"/>
+                            <field name="processing_mode" required="1"/>
+                            <field name="dubbing_voice" invisible="processing_mode != 'dubbing'"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Description">
+                        <field name="description" nolabel="1"/>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Video Files">
+                            <group>
+                                <field name="video_file_path" readonly="1" invisible="not video_file_path"/>
+                                <field name="processed_video_path" readonly="1" invisible="not processed_video_path"/>
+                                <field name="video_attachment_id" invisible="not video_attachment_id"/>
+                                <field name="video_file_size" widget="integer" invisible="not video_file_size"/>
+                                <field name="video_duration" widget="float" invisible="not video_duration"/>
+                            </group>
+                            <div class="mt16" invisible="state != 'done'">
+                                <button name="action_watch_video" type="object" string="Watch Processed Video" 
+                                       class="btn-primary" invisible="not processed_video_path"/>
+                                <button name="action_watch_original" type="object" string="Watch Original Video" 
+                                       class="btn-secondary" invisible="not video_file_path"/>
+                                <button name="action_download_processed" type="object" string="Download Processed Video" 
+                                       class="btn-success" invisible="not processed_video_path"/>
+                            </div>
+                        </page>
+                        
+                        <page string="Transcription" invisible="not transcription_text">
+                            <group>
+                                <field name="transcription_language"/>
+                                <field name="transcription_text" widget="text"/>
+                            </group>
+                        </page>
+                        
+                        <page string="Translation" invisible="not translation_text">
+                            <group>
+                                <field name="translation_text" widget="text"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_video_translator_list" model="ir.actions.act_window">
+        <field name="name">Video Translations</field>
+        <field name="res_model">leonix.video.translator</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_video_translator_tree"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first video translation request
+            </p>
+        </field>
+    </record>
+</odoo>

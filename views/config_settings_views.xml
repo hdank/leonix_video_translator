@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Configuration Settings View -->
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.video.translator</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="80"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Video Translator" string="Video Translator" name="video_translator_settings">
+                    <block title="API Configuration">
+                        <setting string="OpenAI API Configuration">
+                            <div class="text-muted">
+                                Configure OpenAI Whisper for video transcription
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <field name="openai_api_key" password="True" placeholder="sk-..."/>
+                                </div>
+                            </div>
+                        </setting>
+                        
+                        <setting string="Google Cloud API Configuration">
+                            <div class="text-muted">
+                                Configure Google Cloud for translation and text-to-speech
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <field name="gcloud_project_id" placeholder="your-project-id"/>
+                                </div>
+                                <div class="col-12 mt-2">
+                                    <field name="gcloud_credentials_json" 
+                                           widget="text" 
+                                           placeholder="Paste your Google Cloud service account JSON credentials here..."/>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Action for Settings -->
+    <record id="action_video_translator_config" model="ir.actions.act_window">
+        <field name="name">Video Translator Settings</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+    </record>
+    
+    <!-- Alternative simple action for testing -->
+    <record id="action_video_translator_settings" model="ir.actions.server">
+        <field name="name">Video Translator Settings</field>
+        <field name="model_id" ref="base.model_res_config_settings"/>
+        <field name="state">code</field>
+        <field name="code">
+            action = {
+                'type': 'ir.actions.act_window',
+                'res_model': 'res.config.settings',
+                'view_mode': 'form',
+                'target': 'inline',
+                'context': {'module': 'general_settings'},
+            }
+        </field>
+    </record>
+</odoo>

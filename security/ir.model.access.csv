@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_leonix_video_translator_portal,leonix.video.translator.portal,model_leonix_video_translator,base.group_portal,1,1,1,0
+access_leonix_video_translator_user,leonix.video.translator.user,model_leonix_video_translator,base.group_user,1,1,1,1
+access_leonix_video_download_queue_user,leonix.video.download.queue.user,model_leonix_video_download_queue,base.group_user,1,1,1,1

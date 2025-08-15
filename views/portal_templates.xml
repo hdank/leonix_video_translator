@@ -1,0 +1,452 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Add menu entry to the portal home page -->
+    <template id="portal_my_home_video_translator" name="Portal My Home Video Translator" inherit_id="portal.portal_my_home" priority="40">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="title">Video Translations</t>
+                <t t-set="url">/my/video-translations</t>
+                <t t-set="placeholder_count" t-value="'video_count'"/>
+                <t t-set="icon" t-value="'fa-video-camera'"/>
+            </t>
+        </xpath>
+    </template>
+    
+    <!-- Video Translations list view for portal -->
+    <template id="portal_my_video_translations" name="My Video Translations">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Video Translations</t>
+            </t>
+            <t t-if="not videos">
+                <div class="alert alert-warning mt8" role="alert">
+                    There are no video translation requests.
+                </div>
+            </t>
+            <t t-if="videos" t-call="portal.portal_table">
+                <thead>
+                    <tr class="active">
+                        <th>Name</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <t t-foreach="videos" t-as="video">
+                        <tr>
+                            <td>
+                                <a t-attf-href="/my/video-translations/#{video.id}">
+                                    <t t-esc="video.name"/>
+                                </a>
+                            </td>
+                            <td class="text-center">
+                                <span t-field="video.state" class="badge rounded-pill bg-secondary"/>
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group">
+                                    <a t-attf-href="/my/video-translations/#{video.id}" class="btn btn-sm btn-primary">
+                                        <i class="fa fa-eye"></i> View
+                                    </a>
+                                    <form t-if="video.state not in ['draft', 'downloading']" 
+                                          t-attf-action="/my/video-translations/#{video.id}/delete" 
+                                          method="post" 
+                                          class="d-inline">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <button type="submit" class="btn btn-sm btn-danger ms-1"
+                                                onclick="return confirm('Are you sure you want to delete this video?')">
+                                            <i class="fa fa-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                    <!-- Debug button -->
+                                    <a t-attf-href="/my/video-translations/#{video.id}/debug" 
+                                       class="btn btn-sm btn-info ms-1" 
+                                       target="_blank" 
+                                       title="Debug Storage Locations">
+                                        <i class="fa fa-bug"></i> Debug
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    </t>
+                </tbody>
+            </t>
+        </t>
+    </template>
+    
+    <!-- Single video translation detail view -->
+    <template id="portal_my_video_translation" name="My Video Translation">
+        <t t-call="portal.portal_layout">
+            <t t-set="o_portal_fullwidth_alert" groups="portal.group_portal">
+                <t t-call="portal.portal_back_in_edit_mode">
+                    <t t-set="backend_url" t-value="'/web#model=leonix.video.translator&amp;id=%s&amp;view_type=form' % (video.id)"/>
+                </t>
+            </t>
+
+            <div class="row mt-4">
+                <div class="col-12 o_portal_video_download" t-attf-data-video-id="#{video.id}">
+                    <h3 class="mb-4">
+                        <small class="text-muted">Video Translation - </small><span t-field="video.name"/>
+                    </h3>
+                    
+                    <!-- Display repair messages -->
+                    <div t-if="request.params.get('message') == 'repair_started'" class="alert alert-info">
+                        <i class="fa fa-info-circle"></i> Video repair started - the video will be re-downloaded.
+                    </div>
+                    <div t-if="request.params.get('message') == 'repair_failed'" class="alert alert-warning">
+                        <i class="fa fa-exclamation-triangle"></i> Could not repair video - it may already be valid.
+                    </div>
+                    <div t-if="request.params.get('message') == 'repair_error'" class="alert alert-danger">
+                        <i class="fa fa-exclamation-triangle"></i> Error occurred during repair process.
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div>
+                                    <strong>Status:</strong> <span t-field="video.state" class="badge rounded-pill bg-secondary"/>
+                                </div>
+                                <div t-if="video.state != 'downloading'">
+                                    <form t-attf-action="/my/video-translations/#{video.id}/delete" method="post">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                onclick="return confirm('Are you sure you want to delete this video? This action cannot be undone.')">
+                                            <i class="fa fa-trash"></i> Delete Video
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <strong>Video URL:</strong>
+                                <div t-field="video.video_url"/>
+                            </div>
+                            <div class="mb-4">
+                                <strong>Platform:</strong>
+                                <div t-field="video.video_platform"/>
+                            </div>
+                            <div class="mb-4" t-if="video.description">
+                                <strong>Description:</strong>
+                                <div t-field="video.description"/>
+                            </div>
+                            
+                            <!-- Download Progress Section -->
+                            <div class="mb-4" t-if="video.state == 'downloading'">
+                                <strong>Download Progress:</strong>
+                                <div class="progress mt-2 mb-2" style="height: 25px;">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                         role="progressbar" 
+                                         t-attf-style="width: #{video.download_progress}%"
+                                         t-attf-aria-valuenow="#{video.download_progress}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                        <span t-esc="'%.1f%%' % video.download_progress"/>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6" t-if="video.download_speed">
+                                        <small class="text-muted">Speed: <span data-progress-speed="true" t-esc="video.download_speed"/></small>
+                                    </div>
+                                    <div class="col-md-6" t-if="video.estimated_time">
+                                        <small class="text-muted">ETA: <span data-progress-eta="true" t-esc="video.estimated_time"/></small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+            <!-- Video Player Section -->
+            <div class="mb-4" t-if="video.state == 'downloaded' and video.video_attachment_id">
+                <strong>Downloaded Video:</strong>
+                <div class="mt-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <!-- Primary Video Player -->
+                            <div class="mb-3">
+                                <h6>Video Player:</h6>
+                                <video id="video-player-#{video.id}" controls="controls" style="width: 100%; max-height: 400px;" preload="metadata">
+                                    <source id="video-source-#{video.id}" src="" />
+                                    Your browser does not support the video tag.
+                                </video>
+                                <div id="video-status-#{video.id}" class="mt-2">
+                                    <small class="text-muted">Initializing video...</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Video control buttons -->
+                            <div class="mb-3">
+                                <button id="try-custom-#{video.id}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fa fa-play"></i> Try Custom Storage
+                                </button>
+                                <button id="try-odoo-#{video.id}" class="btn btn-sm btn-outline-success ms-1">
+                                    <i class="fa fa-refresh"></i> Try Odoo Storage
+                                </button>
+                                <form t-attf-action="/my/video-translations/#{video.id}/repair" method="post" class="d-inline ms-1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <button type="submit" class="btn btn-sm btn-outline-warning"
+                                            onclick="return confirm('This will re-download the video. Continue?')"
+                                            title="Re-download video if it appears corrupted">
+                                        <i class="fa fa-wrench"></i> Repair Video
+                                    </button>
+                                </form>
+                            </div>
+                            
+                            <!-- Debug Information -->
+                            <div class="mt-3 p-3 bg-light rounded" id="debug-info-#{video.id}" style="display: none;">
+                                <h6>Debug Information:</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <small class="text-muted">
+                                            <strong>Attachment ID:</strong> <span t-esc="video.video_attachment_id.id"/><br/>
+                                            <strong>Store Filename:</strong> <span t-esc="video.video_attachment_id.store_fname"/><br/>
+                                            <strong>MIME Type:</strong> <span t-esc="video.video_attachment_id.mimetype"/><br/>
+                                            <strong>Database Size:</strong> <span t-esc="video.video_attachment_id.file_size"/> bytes
+                                        </small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <small class="text-muted">
+                                            Size: <span t-esc="'%.1f MB' % (video.video_file_size / 1024 / 1024)"/>
+                                            <span t-if="video.video_duration"> | Duration: <span t-esc="'%.0f seconds' % video.video_duration"/></span><br/>
+                                            <strong>Tested Sources:</strong><br/>
+                                            <div id="source-status-#{video.id}">
+                                                • Custom: <span class="text-muted">Not tested</span><br/>
+                                                • Odoo: <span class="text-muted">Not tested</span>
+                                            </div>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Toggle debug info button -->
+                            <div class="mt-2">
+                                <button class="btn btn-sm btn-outline-info" 
+                                        onclick="document.getElementById('debug-info-#{video.id}').style.display = document.getElementById('debug-info-#{video.id}').style.display === 'none' ? 'block' : 'none';">
+                                    <i class="fa fa-info-circle"></i> Toggle Debug Info
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <script>
+                    // Initialize video player when DOM is ready
+                    document.addEventListener('DOMContentLoaded', function() {
+                        initVideoPlayer(
+                            #{video.id},
+                            #{video.video_attachment_id.id},
+                            '<t t-esc="video.video_attachment_id.mimetype"/>'
+                        );
+                    });
+                </script>
+                
+                <div class="mt-2">
+                    <a t-attf-href="/web/content/#{video.video_attachment_id.id}?download=true" 
+                       class="btn btn-outline-primary btn-sm">
+                        <i class="fa fa-download"></i> Download Video File
+                    </a>
+                    <form t-attf-action="/my/video-translations/#{video.id}/delete" method="post" class="d-inline ms-2">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <button type="submit" class="btn btn-outline-danger btn-sm"
+                                onclick="return confirm('Are you sure you want to delete this video? This action cannot be undone.')">
+                            <i class="fa fa-trash"></i> Delete Video
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Video Processing Actions -->
+                <div class="card mt-4" t-if="video.state in ['downloaded', 'translating', 'done']">
+                    <div class="card-header">
+                        <h5><i class="fa fa-cogs"></i> Video Processing</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Processing Status -->
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <strong>Transcription:</strong>
+                                <span t-if="video.transcription_status == 'not_started'" class="badge bg-secondary">Not Started</span>
+                                <span t-elif="video.transcription_status == 'in_progress'" class="badge bg-warning">In Progress</span>
+                                <span t-elif="video.transcription_status == 'completed'" class="badge bg-success">Completed</span>
+                                <span t-elif="video.transcription_status == 'failed'" class="badge bg-danger">Failed</span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Translation:</strong>
+                                <span t-if="video.translation_status == 'not_started'" class="badge bg-secondary">Not Started</span>
+                                <span t-elif="video.translation_status == 'in_progress'" class="badge bg-warning">In Progress</span>
+                                <span t-elif="video.translation_status == 'completed'" class="badge bg-success">Completed</span>
+                                <span t-elif="video.translation_status == 'failed'" class="badge bg-danger">Failed</span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Dubbing:</strong>
+                                <span t-if="video.dubbing_status == 'not_started'" class="badge bg-secondary">Not Started</span>
+                                <span t-elif="video.dubbing_status == 'in_progress'" class="badge bg-warning">In Progress</span>
+                                <span t-elif="video.dubbing_status == 'completed'" class="badge bg-success">Completed</span>
+                                <span t-elif="video.dubbing_status == 'failed'" class="badge bg-danger">Failed</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Language Selection Form -->
+                        <form t-attf-action="/my/video-translations/#{video.id}/set-language" method="post" class="mb-3">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="translation_language" class="form-label">Target Language:</label>
+                                    <select name="translation_language" id="translation_language" class="form-select" required="1">
+                                        <option value="">Select Language...</option>
+                                        <option value="vi" t-att-selected="video.translation_language == 'vi'">Vietnamese</option>
+                                        <option value="en" t-att-selected="video.translation_language == 'en'">English</option>
+                                        <option value="ja" t-att-selected="video.translation_language == 'ja'">Japanese</option>
+                                        <option value="ko" t-att-selected="video.translation_language == 'ko'">Korean</option>
+                                        <option value="zh" t-att-selected="video.translation_language == 'zh'">Chinese</option>
+                                        <option value="es" t-att-selected="video.translation_language == 'es'">Spanish</option>
+                                        <option value="fr" t-att-selected="video.translation_language == 'fr'">French</option>
+                                        <option value="de" t-att-selected="video.translation_language == 'de'">German</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="dubbing_voice" class="form-label">Dubbing Voice:</label>
+                                    <select name="dubbing_voice" id="dubbing_voice" class="form-select">
+                                        <option value="vi-VN-Chirp3-HD-Achernar" t-att-selected="video.dubbing_voice == 'vi-VN-Chirp3-HD-Achernar'">Vietnamese Female (Chirp3-HD-Achernar)</option>
+                                        <option value="vi-VN-Chirp3-HD-Bastian" t-att-selected="video.dubbing_voice == 'vi-VN-Chirp3-HD-Achird'">Vietnamese Male (Chirp3-HD-Achird)</option>
+                                        <option value="vi-VN-Standard-A" t-att-selected="video.dubbing_voice == 'vi-VN-Standard-A'">Vietnamese Standard Female</option>
+                                        <option value="vi-VN-Standard-B" t-att-selected="video.dubbing_voice == 'vi-VN-Standard-B'">Vietnamese Standard Male</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fa fa-save"></i> Update Settings
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <!-- Action Buttons -->
+                        <div class="btn-group-wrap">
+                            <!-- Individual Action Buttons -->
+                            <form t-if="video.transcription_status == 'not_started'" 
+                                  t-attf-action="/my/video-translations/#{video.id}/transcribe" 
+                                  method="post" class="d-inline me-2">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa fa-microphone"></i> Start Transcription
+                                </button>
+                            </form>
+                            
+                            <form t-if="video.transcription_status == 'completed' and video.translation_status == 'not_started' and video.translation_language" 
+                                  t-attf-action="/my/video-translations/#{video.id}/translate" 
+                                  method="post" class="d-inline me-2">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <button type="submit" class="btn btn-info">
+                                    <i class="fa fa-language"></i> Start Translation
+                                </button>
+                            </form>
+                            
+                            <form t-if="video.translation_status == 'completed' and video.dubbing_status == 'not_started'" 
+                                  t-attf-action="/my/video-translations/#{video.id}/dub" 
+                                  method="post" class="d-inline me-2">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="fa fa-volume-up"></i> Start Dubbing
+                                </button>
+                            </form>
+                            
+                            <!-- Complete Workflow Button -->
+                            <form t-if="video.transcription_status == 'not_started' and video.translation_language" 
+                                  t-attf-action="/my/video-translations/#{video.id}/transcribe-and-dub" 
+                                  method="post" class="d-inline">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <button type="submit" class="btn btn-success btn-lg"
+                                        onclick="return confirm('This will start the complete transcription, translation, and dubbing process. This may take several minutes. Continue?')">
+                                    <i class="fa fa-magic"></i> Transcribe &amp; Dub Complete
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- Results Display -->
+                        <div t-if="video.transcription_text" class="mt-4">
+                            <h6><i class="fa fa-file-text"></i> Transcription Result:</h6>
+                            <div class="card">
+                                <div class="card-body">
+                                    <p class="small text-muted">Detected Language: <span t-esc="video.transcription_language"/></p>
+                                    <div style="max-height: 200px; overflow-y: auto;" t-esc="video.transcription_text"/>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div t-if="video.translation_text" class="mt-4">
+                            <h6><i class="fa fa-language"></i> Translation Result:</h6>
+                            <div class="card">
+                                <div class="card-body">
+                                    <p class="small text-muted">Target Language: <span t-esc="video.translation_language"/></p>
+                                    <div style="max-height: 200px; overflow-y: auto;" t-esc="video.translation_text"/>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div t-if="video.dubbed_video_attachment_id" class="mt-4">
+                            <h6><i class="fa fa-video-camera"></i> Dubbed Video:</h6>
+                            <div class="card">
+                                <div class="card-body">
+                                    <p class="small text-muted">Voice: <span t-esc="video.dubbing_voice"/></p>
+                                    <video controls="controls" style="width: 100%; max-height: 400px;" preload="metadata">
+                                        <source t-attf-src="/web/content/#{video.dubbed_video_attachment_id.id}?download=false" />
+                                        Your browser does not support the video tag.
+                                    </video>
+                                    <div class="mt-2">
+                                        <a t-attf-href="/web/content/#{video.dubbed_video_attachment_id.id}?download=true" 
+                                           class="btn btn-success">
+                                            <i class="fa fa-download"></i> Download Dubbed Video
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>                            <!-- Stand-alone Delete Button (for states that don't show the video player) -->
+                            <div class="mb-4" t-if="video.state not in ['draft', 'downloading'] and not (video.state == 'downloaded' and video.video_attachment_id)">
+                                <form t-attf-action="/my/video-translations/#{video.id}/delete" method="post">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <button type="submit" class="btn btn-danger"
+                                            onclick="return confirm('Are you sure you want to delete this video? This action cannot be undone.')">
+                                        <i class="fa fa-trash"></i> Delete Video and Reset
+                                    </button>
+                                </form>
+                            </div>
+                            
+                            <!-- Download Button -->
+                            <div class="mb-4" t-if="video.state == 'draft'">
+                                <form t-attf-action="/my/video-translations/#{video.id}/download" method="post" class="download-form">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="fa fa-download"></i> Start Download
+                                    </button>
+                                </form>
+                            </div>
+                            
+                            <!-- Failed State -->
+                            <div class="mb-4" t-if="video.state == 'failed'">
+                                <div class="alert alert-danger">
+                                    <strong>Download Failed</strong>
+                                    <p>The video download failed. Please try again or check the video URL.</p>
+                                    <div class="d-flex mt-2">
+                                        <form t-attf-action="/my/video-translations/#{video.id}/download" method="post" class="download-form me-2">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fa fa-refresh"></i> Retry Download
+                                            </button>
+                                        </form>
+                                        <form t-attf-action="/my/video-translations/#{video.id}/delete" method="post" class="ms-2">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <button type="submit" class="btn btn-danger"
+                                                    onclick="return confirm('Are you sure you want to delete this video? This will reset the download status.')">
+                                                <i class="fa fa-trash"></i> Delete &amp; Reset
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

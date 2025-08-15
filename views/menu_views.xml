@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem 
+        id="menu_video_translator_root"
+        name="Video Translator"
+        sequence="10"/>
+
+    <menuitem 
+        id="menu_video_translator"
+        name="Video Translations"
+        parent="menu_video_translator_root"
+        action="action_video_translator_list"
+        sequence="1"/>
+        
+    <menuitem 
+        id="menu_video_download_queue"
+        name="Download Queue"
+        parent="menu_video_translator_root"
+        action="action_video_download_queue"
+        sequence="2"/>
+        
+    <menuitem 
+        id="menu_video_translator_config"
+        name="Configuration"
+        parent="menu_video_translator_root"
+        action="action_video_translator_config"
+        sequence="10"/>
+</odoo>

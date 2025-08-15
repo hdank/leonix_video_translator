@@ -1,0 +1,124 @@
+<odoo>
+    <!-- Proper asset bundle for Odoo -->
+    <template id="video_download_assets" name="Video Translator Assets">
+        <xpath expr="." position="inside">
+            <link rel="stylesheet" type="text/css" href="/leonix_video_translator/static/src/css/video_process.css"/>
+            <script type="text/javascript" src="/leonix_video_translator/static/src/js/video_download_progress.js"></script>
+            <script type="text/javascript" src="/leonix_video_translator/static/src/js/video_player.js"></script>
+            <script type="text/javascript" src="/leonix_video_translator/static/src/js/portal_video_processing.js"></script>
+        </xpath>
+    </template>
+
+    <!-- Single video translation detail view -->
+    <template id="portal_my_video_translation" name="My Video Translation">
+        <t t-call="portal.portal_layout">
+            <div class="row mt-4">
+                <div class="col-12 o_portal_video_download" t-attf-data-video-id="#{video.id}">
+                    <h3 class="mb-4">
+                        <small class="text-muted">Video Translation - </small><span t-field="video.name"/>
+                    </h3>
+                    
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="mb-4">
+                                <strong>Status:</strong> 
+                                <span t-if="video.state == 'draft'" class="badge bg-secondary">Draft</span>
+                                <span t-elif="video.state == 'downloading'" class="badge bg-primary">Downloading</span>
+                                <span t-elif="video.state == 'downloaded'" class="badge bg-success">Downloaded</span>
+                                <span t-elif="video.state == 'failed'" class="badge bg-danger">Failed</span>
+                                <span t-else="" class="badge bg-info"><span t-field="video.state"/></span>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <strong>Video URL:</strong>
+                                <div t-field="video.video_url"/>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <strong>Platform:</strong>
+                                <div t-field="video.video_platform"/>
+                            </div>
+                            
+                            <div class="mb-4" t-if="video.description">
+                                <strong>Description:</strong>
+                                <div t-field="video.description"/>
+                            </div>
+                            
+                            <!-- Download Progress Section -->
+                            <div class="mb-4" t-if="video.state == 'downloading'">
+                                <strong>Download Progress:</strong>
+                                <div class="progress mt-2 mb-2" style="height: 25px;">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                         role="progressbar" 
+                                         t-attf-style="width: #{video.download_progress}%"
+                                         t-attf-aria-valuenow="#{video.download_progress}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                        <span t-esc="'{:.1f}%'.format(video.download_progress)"/>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6" t-if="video.download_speed">
+                                        <small>Speed: <span data-progress-speed="" t-esc="video.download_speed"/></small>
+                                    </div>
+                                    <div class="col-md-6" t-if="video.estimated_time">
+                                        <small>ETA: <span data-progress-eta="" t-esc="video.estimated_time"/></small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Download Button for Draft State -->
+                            <div class="mb-4" t-if="video.state == 'draft'">
+                                <form t-attf-action="/my/video-translations/#{video.id}/download" method="post" class="download-form">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <button type="submit" class="btn btn-primary download-btn">
+                                        <i class="fa fa-download"></i> Start Download
+                                    </button>
+                                </form>
+                            </div>
+                            
+                            <!-- Video Player Section -->
+                            <div class="mb-4" t-if="video.state == 'downloaded' and video.video_attachment_id">
+                                <strong>Video Player:</strong>
+                                <div class="video-player mt-2">
+                                    <video controls="controls" style="width: 100%; max-height: 500px;">
+                                        <source t-attf-src="/web/content/#{video.video_attachment_id.id}" t-att-type="video.video_attachment_id.mimetype"/>
+                                        Your browser does not support the video tag.
+                                    </video>
+                                </div>
+                                
+                                <div class="video-info mt-2">
+                                    <div class="row">
+                                        <div class="col-md-4" t-if="video.video_duration">
+                                            <small><strong>Duration:</strong> <span t-esc="'{:.1f} seconds'.format(video.video_duration)"/></small>
+                                        </div>
+                                        <div class="col-md-4" t-if="video.video_format">
+                                            <small><strong>Format:</strong> <span t-field="video.video_format"/></small>
+                                        </div>
+                                        <div class="col-md-4" t-if="video.video_file_size">
+                                            <small><strong>Size:</strong> <span t-esc="'{:.1f} MB'.format(video.video_file_size / (1024*1024))"/></small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Retry Download for Failed State -->
+                            <div class="mb-4" t-if="video.state == 'failed'">
+                                <div class="alert alert-danger">
+                                    <strong>Download Failed</strong>
+                                    <p>The video download failed. Please try again or check the video URL.</p>
+                                    <form t-attf-action="/my/video-translations/#{video.id}/download" method="post" class="download-form">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <button type="submit" class="btn btn-danger">
+                                            <i class="fa fa-retry"></i> Retry Download
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>
